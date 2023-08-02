@@ -180,10 +180,23 @@ func promptForActivity(date string, startTime, endTime time.Time) bool {
 	activity.Date = date
 	reader := bufio.NewReader(os.Stdin)
 	activity.Tags = getTag(reader)
-	activity.StartTime = startTime.Format("15:04:05")
 	var changeEndTime bool
 
-	fmt.Print("custom end time ? ")
+	fmt.Printf("custom start time ? %s :  ", startTime.Format("15:04:05"))
+
+	start, _ := reader.ReadString('\n')
+	start = strings.TrimSpace(start)
+
+	if start == "" {
+		start = startTime.Format("15:04:05")
+	} else {
+		start = start[:2] + ":" + start[2:]
+		changeEndTime = true
+	}
+
+	activity.StartTime = start
+
+	fmt.Printf("custom end time ? %s : ", endTime.Format("15:04:05"))
 	end, _ := reader.ReadString('\n')
 	end = strings.TrimSpace(end)
 	if end == "" {
