@@ -70,13 +70,18 @@ func main() {
 
 	case "fill":
 		cmd.Usage = func() {
-			fmt.Println("Usage: fill  [-d date]")
+			fmt.Println("Usage: fill [-n offset day]  [-d date]")
+			fmt.Println("  -n  offset day (default 0)")
 			fmt.Println("  -d  Date in YYYYMMDD format (default today)")
+
 		}
 		cmd.StringVar(&date, "d", "", "Date")
+		cmd.IntVar(&numDays, "n", 0, "offset day")
 		cmd.Parse(os.Args[2:])
-		listTimelines(getDates())
-		fillMissingActivities(getDates()[0])
+
+		date := getDate()
+		listTimelines([]string{date})
+		fillMissingActivities(date)
 
 	default:
 		fmt.Println("Invalid command")
@@ -90,10 +95,34 @@ func printHelp() {
 	fmt.Println("Usage:")
 	fmt.Println("  command [flags]")
 	fmt.Println("Commands:")
-	fmt.Println("  track   Track time for current date")
 	fmt.Println("  timeline  View timeline over date range")
 	fmt.Println("  percent   View percentage tracked over date range")
 	fmt.Println("  fill      Fill in any missing dates")
+}
+
+func getDate() string {
+	var dateStr string
+
+	fmt.Println("date:", date, "numDays:", numDays, "")
+
+	if date != "" {
+		parsed, err := time.Parse("20060102", date)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		dateStr = parsed.Format(time.DateOnly)
+
+	} else if numDays > 0 {
+		dateStr = time.Now().AddDate(0, 0, -numDays).Format(time.DateOnly)
+
+	} else {
+		dateStr = time.Now().Format(time.DateOnly)
+		// dates = append(dates, time.Now().Format(time.DateOnly))
+	}
+
+	// fmt.Println("dates:", dates, "number of days:", numDays, "date:", date, "")
+	return dateStr
 }
 
 func getDates() []string {
