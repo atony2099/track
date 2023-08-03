@@ -182,10 +182,19 @@ func promptForActivity(date string, startTime, endTime time.Time) bool {
 	activity.Tags = getTag(reader)
 	var changeEndTime bool
 
-	fmt.Printf("custom start time ? %s :  ", startTime.Format("15:04:05"))
+	var start, end string
 
-	start, _ := reader.ReadString('\n')
-	start = strings.TrimSpace(start)
+	fmt.Println("enter [hhmmss-hhmmss]  or use leave blank to use default")
+	startEnd, _ := reader.ReadString('\n')
+	startEnd = strings.TrimSpace(startEnd)
+	startEnds := strings.Split(startEnd, "-")
+
+	if len(startEnds) == 2 {
+		start = startEnds[0]
+		end = startEnds[1]
+	} else {
+		start = startEnds[0]
+	}
 
 	if start == "" {
 		start = startTime.Format("15:04:05")
@@ -193,20 +202,16 @@ func promptForActivity(date string, startTime, endTime time.Time) bool {
 		start = start[:2] + ":" + start[2:]
 		changeEndTime = true
 	}
-
 	activity.StartTime = start
 
-	fmt.Printf("custom end time ? %s : ", endTime.Format("15:04:05"))
-	end, _ := reader.ReadString('\n')
-	end = strings.TrimSpace(end)
 	if end == "" {
 		end = endTime.Format("15:04:05")
 	} else {
 		end = end[:2] + ":" + end[2:]
 		changeEndTime = true
 	}
-
 	activity.EndTime = end
+
 	conn.InsertActivity(activity)
 
 	return changeEndTime
