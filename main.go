@@ -184,7 +184,7 @@ func promptForActivity(date string, startTime, endTime time.Time) bool {
 
 	var start, end string
 
-	fmt.Println("enter [hhmmss-hhmmss]  or use leave blank to use default")
+	fmt.Print("enter [hhmmss-hhmmss]  or use leave blank to use default: ")
 	startEnd, _ := reader.ReadString('\n')
 	startEnd = strings.TrimSpace(startEnd)
 	startEnds := strings.Split(startEnd, "-")
