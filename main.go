@@ -26,6 +26,12 @@ var (
 	conn *db.Database
 )
 
+type InputParams struct {
+	Tag       string
+	StartTime string
+	EndTime   string
+}
+
 // 22
 func main() {
 
@@ -44,11 +50,7 @@ func main() {
 	switch os.Args[1] {
 
 	case "timeline":
-		cmd.Usage = func() {
-			fmt.Println("Usage: timeline [-n days] [-d date]")
-			fmt.Println("  -n  Number of days (default 0)")
-			fmt.Println("  -d  Date in YYYYMMDD format (default today)")
-		}
+
 		cmd.IntVar(&numDays, "n", 0, "Number of days")
 		cmd.StringVar(&date, "d", "", "Date")
 		// fmt.Println("os.Args", os.Args[2:], len(os.Args), cap(os.Args))
@@ -56,11 +58,6 @@ func main() {
 		listTimelines(getDates())
 
 	case "percent":
-		cmd.Usage = func() {
-			fmt.Println("Usage: percent [-n days] [-d date]")
-			fmt.Println("  -n  Number of days (default 0)")
-			fmt.Println("  -d  Date in YYYYMMDD format (default today)")
-		}
 
 		cmd.IntVar(&numDays, "n", 0, "Number of days")
 		cmd.StringVar(&date, "d", "", "Date")
@@ -69,12 +66,6 @@ func main() {
 		listPercent(getDates())
 
 	case "fill":
-		cmd.Usage = func() {
-			fmt.Println("Usage: fill [-n offset day]  [-d date]")
-			fmt.Println("  -n  offset day (default 0)")
-			fmt.Println("  -d  Date in YYYYMMDD format (default today)")
-
-		}
 		cmd.StringVar(&date, "d", "", "Date")
 		cmd.IntVar(&numDays, "n", 0, "offset day")
 		cmd.Parse(os.Args[2:])
@@ -83,12 +74,46 @@ func main() {
 		listTimelines([]string{date})
 		fillMissingActivities(date)
 
+	case "input":
+
+		var rang, tag string
+
+		cmd.StringVar(&rang, "range", "", "the time range")
+		cmd.StringVar(&tag, "tag", "", "the tag of activity")
+		cmd.Parse(os.Args[2:])
+		inputActivity(rang, tag)
+
 	default:
 		fmt.Println("Invalid command")
 		cmd.Usage()
 		os.Exit(1)
 	}
 
+}
+
+func inputActivity(rang string, tag string) {
+
+	var activity db.Activity
+
+	if tag == "" {
+		tag = "distraction"
+	}
+
+	activity.Date = time.Now().Format("2006-01-02")
+	activity.Tags = tag
+	startEndTime := strings.Split(rang, "-")
+
+	activity.StartTime = startEndTime[0]
+	activity.EndTime = startEndTime[1]
+
+	fmt.Println("startEndTime:", startEndTime, "len:", len(startEndTime), tag)
+	// 记录到数据库
+	err := conn.InsertActivity(activity)
+
+	if err != nil {
+		log.Fatalf("error inserting activity: %v", err)
+
+	}
 }
 
 func printHelp() {
