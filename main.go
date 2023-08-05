@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"database/sql"
 	"flag"
 	"fmt"
 	"log"
@@ -71,7 +70,9 @@ func main() {
 		cmd.Parse(os.Args[2:])
 
 		date := getDate()
-		listTimelines([]string{date})
+		dates := []string{date}
+		listTimelines(dates)
+		listPercent(dates)
 		fillMissingActivities(date)
 
 	case "input":
@@ -128,7 +129,7 @@ func printHelp() {
 func getDate() string {
 	var dateStr string
 
-	fmt.Println("date:", date, "numDays:", numDays, "")
+	// fmt.Println("date:", date, "numDays:", numDays, "")
 
 	if date != "" {
 		parsed, err := time.Parse("20060102", date)
@@ -276,6 +277,7 @@ func promptForActivity(date string, startTime, endTime time.Time) bool {
 // Insert new activity into database
 
 func listTimelines(dates []string) {
+	// fmt.Println("Activities for", dates)
 	for _, date := range dates {
 		listTimelineDetail(date)
 	}
@@ -315,66 +317,6 @@ func newFunction(end time.Time, start time.Time) time.Duration {
 	return duration
 }
 
-func track() {
-	var activity db.Activity
-	var day string = time.Now().Format("2006-01-02")
-
-	activity.Date = day
-
-	reader := bufio.NewReader(os.Stdin)
-	var lastEndTime = ""
-
-	fmt.Print("Enter tags (use numbers for existing tags): ")
-	activity.Tags = getTag(reader)
-
-	activ, err := conn.GetLatestActivityByDate(day)
-
-	if err != nil && err != sql.ErrNoRows {
-		log.Fatalf("error fetching last activity %v", err)
-	}
-
-	if err == sql.ErrNoRows {
-		lastEndTime = "00:00:00"
-	} else {
-		lastEndTime = activ.EndTime
-	}
-
-	fmt.Printf("Start time (HHMMSS) OR %v: ", lastEndTime)
-	start, _ := reader.ReadString('\n')
-	start = strings.TrimSpace(start)
-
-	if start == "" {
-		start = lastEndTime
-	} else {
-		start = start[:2] + ":" + start[2:]
-	}
-
-	activity.StartTime = strings.TrimSpace(start)
-
-	now := time.Now().Format("15:04:05")
-	fmt.Printf("End time (HHMMSS) OR %v ", now)
-	end, _ := reader.ReadString('\n')
-	end = strings.TrimSpace(end)
-
-	if end != "" {
-		activity.EndTime = end[:2] + ":" + end[2:]
-	} else {
-		activity.EndTime = now
-	}
-
-	if activity.Tags == "" {
-		activity.Tags = "play"
-	}
-
-	err = conn.InsertActivity(activity)
-
-	if err != nil {
-		log.Fatalf("error inserting activity %v", err)
-	}
-
-	listTimelineDetail(day)
-}
-
 func getTag(reader *bufio.Reader) string {
 
 	choices, err := conn.GetAllTags()
@@ -404,6 +346,7 @@ func getTag(reader *bufio.Reader) string {
 
 func listPercent(dates []string) {
 
+	fmt.Printf("activities percent for %v\n", dates)
 	results, err := conn.ListActivitiesByTag(dates)
 
 	if err != nil {
